@@ -1,0 +1,2 @@
+order_id,customer_id,order_status,order_purchase_timestamp,order_estimated_delivery_date
+oo_sample,oc_sample,delivered,2024-01-01 00:00:00+00,2024-01-10

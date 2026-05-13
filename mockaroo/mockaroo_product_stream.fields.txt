@@ -1,0 +1,8 @@
+event_id                | Row Unique ID (text) — primary key for append-only loads
+product_nk              | Text — e.g. olist:op1, superstore:sp1
+source_product_id       | Text — optional
+category_name           | Text
+product_name_length     | Number — nullable
+list_price_local        | Number
+local_currency          | Text — BRL or USD
+updated_at              | Datetime (no TZ)

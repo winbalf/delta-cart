@@ -1,0 +1,20 @@
+version: 2
+
+sources:
+  - name: raw
+    description: "Simulated OLTP landing zone (Olist-style BR + Superstore-style US)."
+    schema: raw
+    tables:
+      - name: olist_customers
+      - name: olist_orders
+      - name: olist_order_items
+      - name: olist_products
+      - name: olist_sellers
+      - name: superstore_customers
+      - name: superstore_products
+      - name: superstore_orders
+      - name: exchange_rates
+      - name: mockaroo_customer_attribute_stream
+        description: "Append-only Mockaroo customer attribute stream (CSV loads between jobs)."
+      - name: mockaroo_product_attribute_stream
+        description: "Append-only Mockaroo product attribute stream."

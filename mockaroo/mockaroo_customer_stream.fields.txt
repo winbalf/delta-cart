@@ -1,0 +1,13 @@
+Use these fields in Mockaroo (CSV export). Types are suggestions; keep customer_nk aligned with warehouse keys (e.g. olist:oc1, superstore:sc1).
+
+event_id                | Row Unique ID (text) — primary key for append-only loads
+customer_nk             | Text — must match dbt natural key prefix pattern
+source_customer_id     | Text — optional; falls back to split of customer_nk
+customer_unique_id     | Text — nullable
+customer_zip_code_prefix | Text — nullable
+customer_city          | Text — nullable
+customer_state         | Text — nullable
+address_summary        | Text
+loyalty_tier           | Text
+segment_label            | Text
+updated_at             | Datetime (no TZ) — drives snapshot timestamp strategy

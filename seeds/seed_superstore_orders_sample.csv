@@ -1,0 +1,2 @@
+order_id,customer_id,product_id,order_date,ship_mode,quantity,sales_usd,discount
+so_sample,sc_sample,sp1,2024-01-02,Standard Class,1,100.00,0.00

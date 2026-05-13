@@ -1,0 +1,14 @@
+name: warehouse snapshot (template)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wire database access and run recurring job
+        run: |
+          echo "Template only: export PGURI with secrets, install dbt-postgres on a self-hosted runner,"
+          echo "then run: ./scripts/recurring_snapshot_job.sh path/to/customers.csv path/to/products.csv"

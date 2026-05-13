@@ -1,0 +1,2 @@
+event_id,product_nk,source_product_id,category_name,product_name_length,list_price_local,local_currency,updated_at
+mr-csv-20240801-op2,olist:op2,op2,furniture,28,499.99,BRL,2024-08-01 12:10:00

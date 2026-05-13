@@ -1,0 +1,35 @@
+name: "delta_cart"
+version: "1.0.0"
+config-version: 2
+
+profile: "delta_cart"
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  delta_cart:
+    +materialized: view
+    staging:
+      +tags: ["staging"]
+    intermediate:
+      +tags: ["intermediate"]
+    marts:
+      +materialized: table
+      +tags: ["marts"]
+      core:
+        +tags: ["core"]
+      marketing:
+        +tags: ["marketing"]
+
+vars:
+  default_brl_per_usd: 5.0

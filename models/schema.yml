@@ -1,0 +1,55 @@
+version: 2
+
+models:
+  - name: int_customers__snapshot_feed
+    description: "Latest customer attributes per customer_nk across OLTP/Superstore/Mockaroo (winner = max updated_at)."
+    columns:
+      - name: customer_nk
+        tests:
+          - unique
+          - not_null
+
+  - name: int_products__snapshot_feed
+    description: "Latest product catalog attributes per product_nk across sources and Mockaroo."
+    columns:
+      - name: product_nk
+        tests:
+          - unique
+          - not_null
+
+  - name: int_order_items__enriched
+    description: "Unified order lines with BRL→USD normalization for Olist."
+    columns:
+      - name: order_line_nk
+        tests:
+          - unique
+          - not_null
+      - name: revenue_usd
+        tests:
+          - not_null
+
+  - name: fct_sales
+    description: "Sales facts with point-in-time joins to SCD Type 2 customer and product dimensions."
+    columns:
+      - name: sales_fact_sk
+        tests:
+          - unique
+          - not_null
+      - name: order_line_nk
+        tests:
+          - unique
+          - not_null
+      - name: customer_sk
+        tests:
+          - not_null
+      - name: product_sk
+        tests:
+          - not_null
+      - name: customer_segment_at_sale
+        description: "Marketing segment as-of purchase time (from snapshot), not current OLTP."
+
+snapshots:
+  - name: snap_customers
+    description: "SCD Type 2 history for unified customers (dbt snapshot / timestamp strategy)."
+  - name: snap_products
+    description: "SCD Type 2 history for unified product catalog attributes."
