@@ -13,7 +13,7 @@ Postgres database **`deltacart`** with two logical areas:
 
 ## Schema: `raw`
 
-OLTP-style tables. Solid lines are Postgres foreign keys; dashed lines are logical natural keys used downstream in dbt (no DB constraint).
+OLTP-style tables. Relationship lines are Postgres foreign keys except Mockaroo streams (logical `customer_nk` / `product_nk` links, no DB constraint).
 
 ```mermaid
 erDiagram
@@ -42,7 +42,7 @@ erDiagram
     olist_products {
         text product_id PK
         text product_category_name
-        numeric list_price_brl
+        number list_price_brl
         timestamptz updated_at
     }
 
@@ -54,12 +54,12 @@ erDiagram
     }
 
     olist_order_items {
-        text order_id PK_FK
-        int order_item_id PK
+        text order_id FK
+        number order_item_id PK
         text product_id FK
         text seller_id FK
-        numeric price
-        numeric freight_value
+        number price
+        number freight_value
     }
 
     superstore_customers {
@@ -75,7 +75,7 @@ erDiagram
         text product_id PK
         text category
         text sub_category
-        numeric list_price_usd
+        number list_price_usd
         timestamptz updated_at
     }
 
@@ -84,13 +84,13 @@ erDiagram
         text customer_id FK
         text product_id FK
         date order_date
-        int quantity
-        numeric sales_usd
+        number quantity
+        number sales_usd
     }
 
     exchange_rates {
         date rate_date PK
-        numeric brl_per_usd
+        number brl_per_usd
     }
 
     mockaroo_customer_attribute_stream {
@@ -105,14 +105,14 @@ erDiagram
         text event_id PK
         text product_nk
         text category_name
-        numeric list_price_local
+        number list_price_local
         timestamp updated_at
     }
 
-    olist_customers ||..o| mockaroo_customer_attribute_stream : "customer_nk ~ olist:customer_id"
-    olist_products ||..o| mockaroo_product_attribute_stream : "product_nk ~ olist:product_id"
-    superstore_customers ||..o| mockaroo_customer_attribute_stream : "customer_nk ~ superstore:customer_id"
-    superstore_products ||..o| mockaroo_product_attribute_stream : "product_nk ~ superstore:product_id"
+    olist_customers }o--o{ mockaroo_customer_attribute_stream : "customer_nk"
+    olist_products }o--o{ mockaroo_product_attribute_stream : "product_nk"
+    superstore_customers }o--o{ mockaroo_customer_attribute_stream : "customer_nk"
+    superstore_products }o--o{ mockaroo_product_attribute_stream : "product_nk"
 ```
 
 ### `raw` table inventory
@@ -261,72 +261,72 @@ erDiagram
   stg_olist__order_items ||--|| stg_olist__orders : "order_id"
   int_order_items__enriched }o--|| stg_olist__order_items : "olist lines"
   int_order_items__enriched }o--|| stg_superstore__orders : "superstore lines"
-  int_order_items__enriched }o--o{ exchange_rates : "rate_date <= ordered_at"
+  int_order_items__enriched }o--o{ exchange_rates : "FX lookup"
 
   %% --- Snapshots & dimensions ---
   snap_customers ||--|| int_customers__snapshot_feed : "timestamp SCD2"
   snap_products ||--|| int_products__snapshot_feed : "timestamp SCD2"
   dim_customers ||--|| snap_customers : "current-type-2 projection"
   dim_products ||--|| snap_products : "current-type-2 projection"
-  dim_stores ||--|| stg_olist__sellers : "seller → store"
+  dim_stores ||--|| stg_olist__sellers : "seller to store"
   dim_date }o--|| int_order_items__enriched : "date spine from order dates"
 
   %% --- Facts (PIT joins) ---
-  fct_sales }o--|| int_order_items__enriched : "grain: order_line_nk"
-  fct_sales }o--|| dim_customers : "customer_nk + ordered_at in valid range"
-  fct_sales }o--|| dim_products : "product_nk + ordered_at in valid range"
-  fct_sales }o--|| dim_date : "ordered_at::date = date_day"
+  fct_sales }o--|| int_order_items__enriched : "grain order_line_nk"
+  fct_sales }o--|| dim_customers : "PIT customer_nk"
+  fct_sales }o--|| dim_products : "PIT product_nk"
+  fct_sales }o--|| dim_date : "order date"
   fct_sales_by_segment }o--|| fct_sales : "aggregate"
 
   int_order_items__enriched {
-    text order_line_nk UK
+    text order_line_nk PK
     text source_system
-    timestamptz ordered_at
+    string ordered_at
     text customer_nk
     text product_nk
     text store_nk
-    numeric revenue_usd
-    bigint quantity
+    number revenue_usd
+    number quantity
   }
 
   dim_customers {
-    text customer_sk UK
+    text customer_sk PK
     text customer_nk
-    timestamptz valid_from
-    timestamptz valid_to
+    string valid_from
+    string valid_to
     text segment_label
     text loyalty_tier
   }
 
   dim_products {
-    text product_sk UK
+    text product_sk PK
     text product_nk
-    timestamptz valid_from
-    timestamptz valid_to
+    string valid_from
+    string valid_to
     text category_name
-    numeric list_price_local
+    number list_price_local
   }
 
   dim_date {
-    date date_day UK
-    int date_id
-    int year_number
-    int month_of_year
+    date date_day PK
+    number date_id
+    number year_number
+    number month_of_year
   }
 
   dim_stores {
-    text store_nk UK
+    text store_nk PK
     text seller_city
     text seller_state
   }
 
   fct_sales {
-    text sales_fact_sk UK
-    text order_line_nk UK
+    text sales_fact_sk PK
+    text order_line_nk
     text customer_sk
     text product_sk
-    int order_date_id
-    numeric revenue_usd
+    number order_date_id
+    number revenue_usd
     text customer_segment_at_sale
   }
 
@@ -334,8 +334,8 @@ erDiagram
     text customer_segment_at_sale
     text customer_loyalty_tier_at_sale
     date order_month
-    numeric revenue_usd
-    bigint units_sold
+    number revenue_usd
+    number units_sold
   }
 ```
 
