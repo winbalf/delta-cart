@@ -1,6 +1,6 @@
 # delta-cart
 
-Transactional retail OLTP simulation in Postgres, plus a **dbt** star-schema warehouse with **SCD Type 2** dimensions (dbt snapshots) and **point-in-time (PIT)** joins on `fct_sales`. The story you can tell in interviews: a Brazil-based retailer (Olist-shaped data) acquires a US division (Superstore-shaped data); you unify keys, normalize currency, and attribute revenue to **customer segment at time of purchase**, not “segment today.”
+**delta-cart** is a hands-on data warehouse demo: a transactional retail OLTP layer in Postgres feeds a **dbt** star schema with **SCD Type 2** dimensions (dbt snapshots) and **point-in-time (PIT)** joins on `fct_sales`. It models a Brazil-based retailer (Olist-shaped data) that acquires a US division (Superstore-shaped data)—unifying keys across systems, normalizing currency, and attributing revenue to **customer segment at time of purchase**, not the segment stored in OLTP today.
 
 ## Architecture
 
@@ -35,6 +35,8 @@ flowchart TB
 - **Intermediate**: `int_customers__unioned`, `int_products__unioned`, `int_order_items__enriched` (BRL → USD using `raw.exchange_rates` with a variable fallback). **`int_customers__snapshot_feed`** and **`int_products__snapshot_feed`** merge OLTP/Superstore with **Mockaroo append-only streams** by taking the row with the latest `updated_at` per natural key (ties broken with `mockaroo` > `olist` > `superstore`).
 - **Snapshots**: `snap_customers` and `snap_products` read the `*_snapshot_feed` models and use the **timestamp** strategy on `updated_at` (cast to `timestamp` for clean Postgres snapshot metadata).
 - **Marts**: conformed dimensions on top of snapshots; `fct_sales` joins facts to dims where `ordered_at ∈ [valid_from, valid_to)`.
+
+For per-schema ER diagrams, table relationships, and a **what / why** description of every table, see **[docs/database-diagrams.md](docs/database-diagrams.md)**.
 
 ## Quickstart
 
@@ -167,6 +169,7 @@ dbt show --inline "select * from {{ ref('fct_sales') }} limit 20"
 
 | Path | Role |
 |------|------|
+| `docs/database-diagrams.md` | ER diagrams and table reference (`raw` + `analytics`) |
 | `postgres/init/` | OLTP DDL + seed inserts into `raw` |
 | `scripts/02_oltp_day2_attribute_changes.sql` | Controlled updates to exercise snapshots |
 | `models/staging/` | Source-specific cleaning |
@@ -175,6 +178,5 @@ dbt show --inline "select * from {{ ref('fct_sales') }} limit 20"
 | `models/marts/core/` | Star schema (dims + `fct_sales`) |
 | `models/marts/marketing/` | `fct_sales_by_segment` rollups |
 | `macros/convert_currency.sql` | `brl_to_usd` helper |
-| `analyses/` | Interview-friendly example queries |
+| `analyses/` | Example queries (SCD2 history, revenue at time of purchase) |
 
-Add a `LICENSE` file when you publish the repo if you need explicit terms.
