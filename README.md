@@ -78,6 +78,27 @@ For per-schema ER diagrams, table relationships, and a **what / why** descriptio
    uvx --from dbt-postgres dbt build --profiles-dir "$(pwd)"
    ```
 
+## More sample data and exploring facts
+
+Load the full demo set (**10 customers**, **10 products**, and **17 orders per source**) without recreating the database:
+
+```bash
+set -a; source .env; set +a
+psql "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}" \
+  -f scripts/03_expand_seed_data.sql
+dbt build
+```
+
+Fresh Docker volumes already include this data via `postgres/init/01_raw_oltp.sql`.
+
+| Change in `raw` | Effect on `fct_sales` |
+|-----------------|------------------------|
+| `INSERT` into `olist_order_items` / `superstore_orders` | **More rows**; `revenue_usd` / `quantity` from line amounts |
+| `UPDATE` customer segment/tier or product category/`updated_at` | **Same row count**; PIT columns (`customer_segment_at_sale`, etc.) can change for orders whose `ordered_at` falls in the new SCD window — run `dbt snapshot` then `dbt run` |
+| `UPDATE` line `price` / `freight_value` / `sales_usd` / `discount` only | **Same row count**; `revenue_usd` changes — `dbt run` is enough (no snapshot) |
+
+Example queries: `analyses/explore_fct_sales_changes.sql`.
+
 ## Demonstrating SCD Type 2 (two snapshot runs)
 
 1. Initial build (already creates first snapshot versions).
